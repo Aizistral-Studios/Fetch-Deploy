@@ -26,6 +26,7 @@ import java.util.zip.ZipInputStream;
 
 import com.aizistral.fetchdeploy.config.FDConfig;
 import com.aizistral.fetchdeploy.config.JSONConfig;
+import com.aizistral.fetchdeploy.misc.Lists;
 import com.aizistral.fetchdeploy.misc.MutableBoolean;
 import com.aizistral.fetchdeploy.misc.SimpleFileVisitor;
 import com.google.gson.JsonArray;
@@ -113,7 +114,7 @@ public class FetchDeploy {
                         deployFiles(archive, deployPath, errorDocs, errorDocsArchive, errorDocsDeploy);
 
                         log("Performing placeholder replacements...");
-                        replacePlaceholders(deployPath, organization, repository, branch, lastCommit);
+                        replacePlaceholders(deployPath, errorDocsDeploy, organization, repository, branch, lastCommit);
 
                         log("Clearing downloads...");
                         clearDeploymentDirectory(DOWNLOAD_DIR);
@@ -145,33 +146,40 @@ public class FetchDeploy {
         }
     }
 
-    private static void replacePlaceholders(Path deployPath, String organization, String repository, String branch, String commit) throws IOException {
+    private static void replacePlaceholders(Path deployPath, Path errorDocsPath, String organization, String repository, String branch, String commit) throws IOException {
         String repo = "https://github.com/" + organization + "/" + repository;
+        List<Path> paths = Lists.create(deployPath);
 
-        Files.walkFileTree(deployPath, SimpleFileVisitor.create(file -> {
-            if (file.getFileName().toString().endsWith(".html")) {
-                List<String> lines = Files.readAllLines(file);
-                MutableBoolean replaced = new MutableBoolean(false);
+        if (errorDocsPath != null) {
+            paths.add(errorDocsPath);
+        }
 
-                lines.replaceAll(line -> {
-                    String newLine = line.replace("{$brc}", branch)
-                            .replace("{$brcl}", repo + "/tree/" + branch)
-                            .replace("{$com}", commit.substring(0, 7))
-                            .replace("{$coml}", repo + "/commit/" + commit);
+        for (Path path : paths) {
+            Files.walkFileTree(path, SimpleFileVisitor.create(file -> {
+                if (file.getFileName().toString().endsWith(".html")) {
+                    List<String> lines = Files.readAllLines(file);
+                    MutableBoolean replaced = new MutableBoolean(false);
 
-                    if (!newLine.equals(line)) {
-                        replaced.setValue(true);
+                    lines.replaceAll(line -> {
+                        String newLine = line.replace("{$brc}", branch)
+                                .replace("{$brcl}", repo + "/tree/" + branch)
+                                .replace("{$com}", commit.substring(0, 7))
+                                .replace("{$coml}", repo + "/commit/" + commit);
+
+                        if (!newLine.equals(line)) {
+                            replaced.setValue(true);
+                        }
+
+                        return newLine;
+                    });
+
+                    if (replaced.getValue()) {
+                        debug("Writing replacements into file " + file);
+                        Files.write(file, lines);
                     }
-
-                    return newLine;
-                });
-
-                if (replaced.getValue()) {
-                    debug("Writing replacements into file " + file);
-                    Files.write(file, lines);
                 }
-            }
-        }));
+            }));
+        }
     }
 
     private static void deployFiles(Path archive, Path deploy, boolean errorDocs, Path errorDocsArchive,
