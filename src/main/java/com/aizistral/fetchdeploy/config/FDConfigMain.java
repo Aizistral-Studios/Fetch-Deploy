@@ -13,7 +13,7 @@ import com.aizistral.fetchdeploy.misc.Lists;
 public class FDConfigMain extends JSONConfig {
     protected static final String FILE_NAME = "config.json";
     private String organization = "", repository = "", branch = "{DEFAULT}", artifact = "Website", accessToken = "",
-            deployPath = "./deploy", errorDocsArchivePath = "/errors", errorDocsDeploymentPath = "";
+            deployPath = "./deploy", errorDocsArchivePath = "errors", errorDocsDeploymentPath = "";
     private List<String> deploymentDeletionExclusions = Lists.create(".htaccess");
     private int cycleDelayMillis = 10000;
     private boolean debugLog = false;
