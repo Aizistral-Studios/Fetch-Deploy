@@ -1,5 +1,5 @@
 # Fetch Deploy
-Fetch Deploy is a simple solution for deploying static websites via GitHub. Here's a step-by-step instruction for how to use it:
+Fetch Deploy is a simple solution for deploying static websites from GitHub. Here's a step-by-step instruction for how to use it:
 
 ## 1. Install Java on your target machine
 While this project is built against Java 8, in principle it should be compatible with any of the more modern java versions. For instance, you can install OpenJDK:
@@ -8,7 +8,7 @@ sudo apt-get install openjdk-8-jre
 ```
 
 ## 2. Create GitHub repository with your website
-Should be easy enough. If you use static website generator - your repository should have everything that is necessary to build a website. Pre-built websites that don't use generators are currently not supported.
+Should be easy enough. If you use static website generator - your repository should have everything that is necessary to build a website. Pre-built websites that don't use generators are not specifically supported, but you can nevertheless create workflow to upload repository contents as artifact as outlined below.
 
 ## 3. Add action workflow to build the website
 This will be specific to particular generator you use. For [aizistral.com](https://aizistral.com) I use [lemonarc/jekyll-action](https://github.com/marketplace/actions/jekyll-action), which simply builds a website without pushing it's contents anywhere by itself: [aizistral.com/.github/workflows/build.yml](https://github.com/Aizistral-Studios/aizistral.com/blob/master/.github/workflows/build.yml)
@@ -66,7 +66,7 @@ Delay between API requests to GitHub that check presence of new commits/artifact
 Whether or not logging of some debug information should be enabled. By default this is set to false.
 
 ## 5. Run!
-Once you filled in all the necessary fields, run the jar again and observe it deploy your website. You can use `screen` or something similar to keep console log accessible beyond the bounds of particular SSH session. Note that Fetch Deploy will create another file called `internal.json` in its config folder to keep track of which commits were already deployed; you can delete it and re-run the jar if you need to deploy the website from scratch.
+Once you filled in all the necessary fields, run the jar again and observe it deploy your website. Every once in a while (or, more specifically, every once in `cycleDelayMillis` milliseconds) it will check for availability of new commits and artifacts build from them on GitHub, and deploy again when it finds any. You can use `screen` or something similar to keep console log accessible beyond the bounds of particular SSH session. Note that Fetch Deploy will create another file called `internal.json` in its config folder to keep track of which commits were already deployed; you can delete it and re-run the jar if you need to deploy the website from scratch.
 
 ## Extra features
 You can use special placeholders in your website's layout, which will be automatically replaced by Fetch Deploy in all `.html` documents on deployment. Currently supported placeholders are:
