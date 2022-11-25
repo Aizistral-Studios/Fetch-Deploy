@@ -4,7 +4,7 @@ Fetch Deploy is a simple solution for deploying static websites from GitHub. Her
 ## 1. Install Java on your target machine
 While this project is built against Java 8, in principle it should be compatible with any of the more modern java versions. For instance, you can install OpenJDK:
 ```
-sudo apt-get install openjdk-8-jre
+sudo apt install openjdk-8-jre
 ```
 
 ## 2. Create GitHub repository with your website
