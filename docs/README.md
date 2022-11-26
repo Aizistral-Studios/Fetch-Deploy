@@ -65,6 +65,13 @@ Delay between API requests to GitHub that check presence of new commits/artifact
 - ### `debugLog` (mandatory)
 Whether or not logging of some debug information should be enabled. By default this is set to false.
 
+- ### `insertStylesheetHash` (mandatory)
+If enabled, tries to find stylesheet file at `stylesheetPath` after deployment and generate MD5 hash of it. Then it appends that hash with a checksum parameter to stylesheet queries in all deloyed `.html` documents; for instance, `/assets/css/styles.css` becomes something like `/assets/css/styles.css?checksum=296abedb2508fa7d92d2790f392c20b2`. This ensures it will be re-fetched by browser every time it's changed in case it is cached. This option is disabled by default.
+
+- ### `stylesheetPath` (optional)
+Path to the stylesheet file for `insertStylesheetHash` option.
+
+
 ## 5. Run!
 Once you filled in all the necessary fields, run the jar again and observe it deploy your website. Every once in a while (or, more specifically, every once in `cycleDelayMillis` milliseconds) it will check for availability of new commits and artifacts build from them on GitHub, and deploy again when it finds any. You can use `screen` or something similar to keep console log accessible beyond the bounds of particular SSH session. Note that Fetch Deploy will create another file called `internal.json` in its config folder to keep track of which commits were already deployed; you can delete it and re-run the jar if you need to deploy the website from scratch.
 
