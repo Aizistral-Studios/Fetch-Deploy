@@ -1,5 +1,10 @@
 # Fetch Deploy Changelog
 
+## Release v1.1.0
+
+- Added `insertStylesheetHash` config option.
+
+
 ## Release v1.0.1
 
 - Fixed placeholder replacements not applying to error docs;

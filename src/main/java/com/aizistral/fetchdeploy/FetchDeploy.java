@@ -14,15 +14,22 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
+import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import com.aizistral.fetchdeploy.config.FDConfig;
 import com.aizistral.fetchdeploy.config.JSONConfig;
@@ -43,6 +50,7 @@ public class FetchDeploy {
     public static final Path RUN_DIR = new File(".").toPath();
     public static final Path DOWNLOAD_DIR = RUN_DIR.resolve("download");
     public static final Path CONFIG_DIR = RUN_DIR.resolve("config");
+    private static String stylesheetHash = null;
 
     public static void main(String... args) throws IOException {
         log("Initialization...");
@@ -113,6 +121,11 @@ public class FetchDeploy {
                         log("Started artifact extraction...");
                         deployFiles(archive, deployPath, errorDocs, errorDocsArchive, errorDocsDeploy);
 
+                        if (config.insertStylesheetHash()) {
+                            log("Looking for stylesheet file...");
+                            hashStylesheet(deployPath, errorDocsDeploy);
+                        }
+
                         log("Performing placeholder replacements...");
                         replacePlaceholders(deployPath, errorDocsDeploy, organization, repository, branch, lastCommit);
 
@@ -146,15 +159,27 @@ public class FetchDeploy {
         }
     }
 
+    private static String getMD5Hash(Path file) throws IOException {
+        return DigestUtils.md5Hex(Files.newInputStream(file));
+    }
+
+    private static void hashStylesheet(Path deployPath, Path errorDocsPath) throws IOException {
+        for (Path path : Lists.nullable(deployPath, errorDocsPath)) {
+            Files.walkFileTree(path, SimpleFileVisitor.create(file -> {
+                if (file.endsWith("assets/css/styles.css")) {
+                    stylesheetHash = getMD5Hash(file);
+                    log("Stylesheet MD5 hash: " + stylesheetHash);
+                }
+            }));
+        }
+    }
+
     private static void replacePlaceholders(Path deployPath, Path errorDocsPath, String organization, String repository, String branch, String commit) throws IOException {
         String repo = "https://github.com/" + organization + "/" + repository;
-        List<Path> paths = Lists.create(deployPath);
+        String configPath = FDConfig.getMain().getStylesheetPath();
+        String stylesheetPath = configPath.startsWith("/") ? configPath : "/" + configPath;
 
-        if (errorDocsPath != null) {
-            paths.add(errorDocsPath);
-        }
-
-        for (Path path : paths) {
+        for (Path path : Lists.nullable(deployPath, errorDocsPath)) {
             Files.walkFileTree(path, SimpleFileVisitor.create(file -> {
                 if (file.getFileName().toString().endsWith(".html")) {
                     List<String> lines = Files.readAllLines(file);
@@ -165,6 +190,10 @@ public class FetchDeploy {
                                 .replace("{$brcl}", repo + "/tree/" + branch)
                                 .replace("{$com}", commit.substring(0, 7))
                                 .replace("{$coml}", repo + "/commit/" + commit);
+
+                        if (FDConfig.getMain().insertStylesheetHash() && stylesheetHash != null) {
+                            newLine = newLine.replace(stylesheetPath, stylesheetPath + "?checksum=" + stylesheetHash);
+                        }
 
                         if (!newLine.equals(line)) {
                             replaced.setValue(true);
@@ -180,6 +209,8 @@ public class FetchDeploy {
                 }
             }));
         }
+
+        stylesheetHash = null;
     }
 
     private static void deployFiles(Path archive, Path deploy, boolean errorDocs, Path errorDocsArchive,

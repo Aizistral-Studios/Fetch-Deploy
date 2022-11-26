@@ -13,10 +13,11 @@ import com.aizistral.fetchdeploy.misc.Lists;
 public class FDConfigMain extends JSONConfig {
     protected static final String FILE_NAME = "config.json";
     private String organization = "", repository = "", branch = "{DEFAULT}", artifact = "Website", accessToken = "",
-            deployPath = "./deploy", errorDocsArchivePath = "errors", errorDocsDeploymentPath = "";
+            deployPath = "./deploy", errorDocsArchivePath = "errors", errorDocsDeploymentPath = "",
+            stylesheetPath = "assets/css/styles.css";
     private List<String> deploymentDeletionExclusions = Lists.create(".htaccess");
     private int cycleDelayMillis = 10000;
-    private boolean debugLog = false;
+    private boolean debugLog = false, insertStylesheetHash = false;
 
     protected FDConfigMain() {
         super(FILE_NAME);
@@ -74,6 +75,14 @@ public class FDConfigMain extends JSONConfig {
 
     public String getErrorDocsDeploymentPath() {
         return this.errorDocsDeploymentPath;
+    }
+
+    public String getStylesheetPath() {
+        return this.stylesheetPath;
+    }
+
+    public boolean insertStylesheetHash() {
+        return this.insertStylesheetHash && this.stylesheetPath != null && !this.stylesheetPath.isEmpty();
     }
 
 }

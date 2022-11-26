@@ -17,4 +17,17 @@ public class Lists {
         return list;
     }
 
+    @SafeVarargs
+    public static <T> List<T> nullable(T... values) {
+        List<T> list = Lists.create();
+
+        for (T value : values) {
+            if (value != null) {
+                list.add(value);
+            }
+        }
+
+        return list;
+    }
+
 }
